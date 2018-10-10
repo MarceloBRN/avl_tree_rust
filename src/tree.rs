@@ -152,64 +152,6 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
 
             }
 
-            // if self.depth_right > self.depth_left {
-            //     let depth_diff = self.depth_right - self.depth_left;
-            //     if depth_diff > 1 {
-            //         let root = self.root.take().unwrap();
-            //         let new_root = root.borrow_mut().left.take();
-
-            //         let left_node = new_root.as_ref().unwrap().borrow().left.clone();
-            //         let mut left_height: usize = 0;
-            //         if left_node.is_some(){
-            //             let left_node = left_node.as_ref().unwrap().borrow().clone();
-            //             left_height = AVLNode::height(left_node);
-            //         } else {
-            //             left_height = 0;
-            //         }
-
-            //         let right_node = new_root.as_ref().unwrap().borrow().right.clone();
-            //         let mut right_height: usize = 0;
-            //         if right_node.is_some(){
-            //             let right_node = right_node.as_ref().unwrap().borrow().clone();
-            //             right_height = AVLNode::height(right_node);
-            //         } else {
-            //             right_height = 0;
-            //         }
-                    
-            //         if right_height >= left_height {
-            //             if new_root.as_ref().is_some(){
-            //                 let new_root_left = new_root.as_ref().unwrap().borrow_mut().left.take();
-            //                 root.borrow_mut().right = new_root_left;
-            //                 new_root.as_ref().unwrap().borrow_mut().left = Some(root);
-            //             }
-                        
-            //         } else {
-
-            //         }
-
-            //         self.root = new_root;
-            //     }
-
-            // }else{
-            //     let depth_diff = self.depth_left - self.depth_right;
-            //     if depth_diff > 1 {
-            //         let root = self.root.take().unwrap();
-            //         let new_root = root.borrow_mut().right.take();
-            //         let left_node = new_root.as_ref().unwrap().borrow().left.clone();
-            //         let left_node = left_node.as_ref().unwrap().borrow().clone();
-            //         let right_node = new_root.as_ref().unwrap().borrow().right.clone();
-            //         let right_node = right_node.as_ref().unwrap().borrow().clone();
-                    
-            //         if AVLNode::height(right_node) >= AVLNode::height(left_node) {
-                        
-            //         } else {
-
-            //         }
-
-            //         self.root = new_root;
-            //     } 
-            // }
-
             self.size += 1;            
             true
         }
@@ -256,11 +198,6 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
                 loop {
                     if node_current.borrow().data.is_some() {
                         if &data == node_current.borrow().data.as_ref().unwrap() {
-                            // println!("  node_current = {:p} {:?}", node_current, node_current);
-                            // println!("  node_parent = {:p} {:?}", node_parent, node_parent);
-                            // node_parent = node_current;
-                            // println!("31      node_current = {:p} {:?}", node_current, node_current);
-                            // let node_c = Rc::clone(&node_current);
                             let node_c = Rc::clone(&node_current);
                             let node_c = node_c.borrow();
 
@@ -274,7 +211,7 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
                                     },
                                     _ => {}
                                 }
-                                // let value = Rc::into_raw(node_parent.borrow_mut().left.take().unwrap());
+                            
                             } else if node_c.right.is_none() {
 
                             } else if node_c.left.is_none() {
@@ -282,36 +219,12 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
                             } else {
 
                             }
-                            // match node_c.borrow().right {
-                            //     None => {
-                            //         // let node_c = node_c.borrow();
-                            //         // println!("32      node_current = {:p} {:?}", node_current, node_current);
-                            //         match node_c.borrow().left {
-                            //             None => {
-                            //                 // println!("33      node_current = {:p} {:?}", node_current, node_current);
-                            //                 // let value = Rc::into_raw(node_current);
-                            //                 let value = Rc::into_raw(node_parent.borrow_mut().left.take().unwrap());
-                            //             },
-                            //             _ => {
-                            //                 // println!("3      node_current = {:p} {:?}", node_current, node_current);
-                            //                 node_current.swap(&node_current.borrow_mut().left.take().unwrap());
-                            //                 // println!("3      node_current = {:p} {:?}", node_current, node_current);
-                            //             },
-                            //         }
-                                    
-                            //     }
-                            //     _ => {
-                            //         // println!("3      node_current = {:p} {:?}", node_current, node_current);
-                            //         node_current.swap(&node_current.borrow_mut().right.take().unwrap());
-                            //         // println!("3      node_current = {:p} {:?}", node_current, node_current);
-                            //     }
-                            // }
+
                             break;
                         } else if &data < node_current.borrow().data.as_ref().unwrap() {
-                            // let node: Rc<RefCell<AVLNode<T>>> = Rc::clone(&node_current);
+
                             let node_c = Rc::clone(&node_current);
                             let node_c = node_c.borrow();
-                            // let node_c = node_c.borrow();
 
                             match node_c.left {
                                 None => {
@@ -400,11 +313,9 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
     }
 
     fn left_rotate(&mut self) {
-        //BTNode<T> noDireito = no.getRight();
         let mut root = self.root.take();
         let mut node_right: Option<Rc<RefCell<AVLNode<T>>>> = root.as_ref().unwrap().borrow_mut().right.take();
 
-        //no.setRight(noDireito.getLeft());
         let node_left: Option<Rc<RefCell<AVLNode<T>>>>;
         if node_right.is_some() {
             node_left = node_right.as_ref().unwrap().borrow_mut().left.take();
@@ -412,20 +323,6 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
             node_right.as_mut().unwrap().borrow_mut().left = root;
         }
 
-        // noDireito.getLeft().setParent(no);
-	    // noDireito.setLeft(no);
-	    // noDireito.setParent(no.getParent());
-        // no.setParent(noDireito);
-
-        // if (no != this.getRoot()) {
-        //     if (noDireito.getParent().getLeft() == no) {
-        //         noDireito.getParent().setLeft(noDireito);
-        //     } else {
-        //         noDireito.getParent().setRight(noDireito);
-        //     }
-        // } else {
-        //         this.root = (BSTNode<T>) noDireito;
-        // }
         self.root = node_right;        
 
     }
@@ -592,24 +489,12 @@ mod test {
             println!("height left = {:?}", left.as_ref().unwrap().borrow().height());
         }
         
-
-
-
         // tree.remove(2);
         // tree.remove(11);        
         // tree.remove(4);
         // tree.remove(3);
         // println!("{:?}", tree);
         // println!("{}", tree);
-
-        // unsafe {
-        //     let mut t = tree.root.clone();
-        //     let t = Rc::into_raw(t.take().unwrap());
-            
-        //     println!("{:?}", heap_size_of(t));
-        // }
-        
-        // let _ = Command::new("cmd.exe").arg("/c").arg("pause").status();
         // tree.remove(1);
         // println!("Remove = {:?}", tree);
         // tree.remove(5);
