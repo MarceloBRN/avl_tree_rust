@@ -1,11 +1,7 @@
 [package]
 name = "data_struct"
 version = "0.1.0"
-authors = ["MarceloBRN <marcelognesp@gmail.com>"]
-
-[dependencies]
-num = "0.2"
-heapsize = "0.4.2"
+authors = ["MarceloBRN"]
 
 [profile.test]
 opt-level = 3
