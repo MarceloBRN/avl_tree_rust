@@ -153,19 +153,20 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
                 if self.depth_left > self.depth_right {
                     let depth_diff = self.depth_left - self.depth_right;
                     if depth_diff > 1 {
-                        // let root = self.root.take();
-                        // let mut node_left = &root.as_ref().unwrap().borrow_mut().left;
-                        // if node_left.is_some(){
-                        //     let node_l = &node_left.as_ref().unwrap().borrow().left;
-                        //     let node_r = &node_left.as_ref().unwrap().borrow().right;
+                        let mut root = self.root.take();
+                        let mut node_left = root.as_mut().unwrap().borrow_mut().left.take();
 
-                        //     if AVLTree::<T>::height_node(&node_r) > AVLTree::<T>::height_node(&node_l) {
-                        //         AVLTree::<T>::left_rotate_node(&mut node_left);
-                        //     }
+                        if node_left.is_some(){
+                            let node_l = &node_left.as_ref().unwrap().borrow().left.clone();
+                            let node_r = &node_left.as_ref().unwrap().borrow().right.clone();
+
+                            if AVLTree::<T>::height_node(&node_r) > AVLTree::<T>::height_node(&node_l) {
+                                AVLTree::<T>::left_rotate_node(&mut node_left);
+                            }
                             
-
-                        // }
-                        // self.root = Option::clone(&root);
+                        }
+                        root.as_mut().unwrap().borrow_mut().left = node_left;
+                        self.root = Option::clone(&root);
 
                         AVLTree::<T>::right_rotate_node(&mut self.root);
 
@@ -177,19 +178,20 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
                 } else {
                     let depth_diff = self.depth_right - self.depth_left;
                     if depth_diff > 1 {
-                        // let root = self.root.take();
-                        // let mut node_right = &root.as_ref().unwrap().borrow_mut().right;
+                        let mut root = self.root.take();
+                        let mut node_right = root.as_mut().unwrap().borrow_mut().right.take();
 
-                        // if node_right.is_some(){
-                        //     let node_l = &node_right.as_ref().unwrap().borrow().left;
-                        //     let node_r = &node_right.as_ref().unwrap().borrow().right;
+                        if node_right.is_some(){
+                            let node_l = &node_right.as_ref().unwrap().borrow().left.clone();
+                            let node_r = &node_right.as_ref().unwrap().borrow().right.clone();
 
-                        //     if AVLTree::<T>::height_node(&node_l) > AVLTree::<T>::height_node(&node_r) {
-                        //         AVLTree::<T>::right_rotate_node(&mut node_right);
-                        //     }
+                            if AVLTree::<T>::height_node(&node_l) > AVLTree::<T>::height_node(&node_r) {
+                                AVLTree::<T>::right_rotate_node(&mut node_right);
+                            }
                             
-                        // }
-                        // self.root = Option::clone(&root);
+                        }
+                        root.as_mut().unwrap().borrow_mut().right = node_right;
+                        self.root = Option::clone(&root);
 
                         AVLTree::<T>::left_rotate_node(&mut self.root);
 
@@ -598,9 +600,9 @@ mod test {
         println!("depth = {:?}", tree.depth());
         println!("height = {:?}", tree.height());
 
-        println!("height right = {:?}", &tree.height_right());
+        // println!("height right = {:?}", &tree.height_right());
 
-        println!("height left = {:?}", &tree.height_left());
+        // println!("height left = {:?}", &tree.height_left());
 
         // tree.remove(2);
         // tree.remove(11);
@@ -644,7 +646,7 @@ mod test {
         tree.insert(-39);
         // println!("{}", tree);
         tree.insert(-15);
-        println!("{}", tree);
+        // println!("{}", tree);
 
         // -30
         // |	-44
@@ -685,6 +687,13 @@ mod test {
         // println!("{}", tree);
         tree.insert(-37);
         // println!("{}", tree);
+
+        // -39
+        // |	-44
+        // |	|	-76
+        // |	-30
+        // |	|	-37
+        // |	|	-16
 
     }
 }
