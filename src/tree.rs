@@ -11,15 +11,15 @@ pub struct AVLTree<T: Clone>{
     size: usize,
     depth_left: usize,
     depth_right: usize,
-    root: Option<Rc<RefCell<AVLNode<T>>>>,
+    root: Option<Rc<RefCell<AVLTreeNode<T>>>>,
 }
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Default)]
-struct AVLNode<T: Clone>{
+struct AVLTreeNode<T: Clone>{
     data: Option<T>,
-    left: Option<Rc<RefCell<AVLNode<T>>>>,
-    right: Option<Rc<RefCell<AVLNode<T>>>>,
+    left: Option<Rc<RefCell<AVLTreeNode<T>>>>,
+    right: Option<Rc<RefCell<AVLTreeNode<T>>>>,
 }
 
 #[allow(dead_code)]
@@ -69,8 +69,8 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
     #[allow(unused_assignments, unused_mut)]
     pub fn insert(&mut self, key: T) -> bool{
         if self.size == 0 {
-            let new_node = Rc::new(RefCell::new(AVLNode {
-                data: Some(key),
+            let new_node = Rc::new(RefCell::new(AVLTreeNode {
+                data: Some(T::clone(&key)),
                 left: None,
                 right: None,
             }));
@@ -80,35 +80,37 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
             true
         } else {
             let root = self.root.take().unwrap();
-            let mut node_current: Rc<RefCell<AVLNode<T>>> = Rc::clone(&root);
-            let mut node_parent: Rc<RefCell<AVLNode<T>>> = Rc::clone(&root);
+            let mut node_current: Rc<RefCell<AVLTreeNode<T>>> = Rc::clone(&root);
+            let mut node_parent: Rc<RefCell<AVLTreeNode<T>>> = Rc::clone(&root);
 
             loop {
 
-                if node_current.borrow().data.is_some() {
+                let nc = node_current.borrow().data.clone();
+                
+                if nc.is_some() {
 
-                    if &key == node_current.borrow().data.as_ref().unwrap() {
+                    if &key == nc.as_ref().unwrap() {
 
                         self.root = Some(root);
                         return false
 
-                    } else if &key < node_current.borrow().data.as_ref().unwrap() {
+                    } else if &key < nc.as_ref().unwrap() {
 
                         node_parent = node_current;
-                        // node_current = Rc::new(RefCell::new(AVLNode { data: None, left: None, right: None}));
-
-                        match node_parent.borrow().left {
-                            None => { break; }
-                            _ => { node_current = Rc::clone(node_parent.borrow().left.as_ref().unwrap()); }
+                        
+                        if node_parent.borrow().left.is_some() {
+                            node_current = Rc::clone(node_parent.borrow().left.as_ref().unwrap());
+                        } else {
+                            break;
                         }
                     } else {
 
                         node_parent = node_current;
-                        // node_current = Rc::new(RefCell::new(AVLNode { data: None, left: None, right: None,}));
-
-                        match node_parent.borrow().right {
-                            None => { break; }
-                            _ => { node_current = Rc::clone(node_parent.borrow().right.as_ref().unwrap()); }
+                        
+                        if node_parent.borrow().right.is_some() {
+                            node_current = Rc::clone(node_parent.borrow().right.as_ref().unwrap());
+                        } else {
+                            break;
                         }
                     }
                 } else {
@@ -116,9 +118,7 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
                 }
             }
 
-            // node_current = Rc::new(RefCell::new(AVLNode { data: None, left: None, right: None }));
-
-            let new_node = Rc::new(RefCell::new(AVLNode { data: Some(T::clone(&key)), left: None, right: None }));
+            let new_node = Rc::new(RefCell::new(AVLTreeNode { data: Some(T::clone(&key)), left: None, right: None }));
 
             if Rc::ptr_eq(&root, &node_parent) {
 
@@ -168,8 +168,6 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
                         root.as_mut().unwrap().borrow_mut().left = node_left;
                         self.root = Option::clone(&root);
 
-                        // AVLTree::<T>::right_rotate_node(&mut self.root);
-
                         self.right_rotate();
 
                         self.depth_right = self.depth_right + 1;
@@ -194,8 +192,6 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
                         }
                         root.as_mut().unwrap().borrow_mut().right = node_right;
                         self.root = Option::clone(&root);
-
-                        // AVLTree::<T>::left_rotate_node(&mut self.root);
 
                         self.left_rotate();
 
@@ -251,10 +247,10 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
                 }
 
             } else {
-                let root: Rc<RefCell<AVLNode<T>>> = self.root.take().unwrap();
+                let root: Rc<RefCell<AVLTreeNode<T>>> = self.root.take().unwrap();
 
-                let mut node_current: Rc<RefCell<AVLNode<T>>> = Rc::clone(&root);
-                let mut node_parent: Rc<RefCell<AVLNode<T>>> = Rc::clone(&root);
+                let mut node_current: Rc<RefCell<AVLTreeNode<T>>> = Rc::clone(&root);
+                let mut node_parent: Rc<RefCell<AVLTreeNode<T>>> = Rc::clone(&root);
 
                 let mut node_direction: NodeDirection = NodeDirection::NodeNone;
 
@@ -347,7 +343,7 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
     pub fn height(&self) ->  usize {
         if self.size == 0 { return 0 }
 
-        let mut q = VecDeque::<Rc<RefCell<AVLNode<T>>>>::new();
+        let mut q = VecDeque::<Rc<RefCell<AVLTreeNode<T>>>>::new();
 
         q.push_back(self.root.as_ref().unwrap().clone());
 
@@ -409,12 +405,12 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
         unimplemented!();
     }
 
-    fn height_node<'a>(node: &'a Option<Rc<RefCell<AVLNode<T>>>>) ->  usize {
+    fn height_node<'a>(node: &'a Option<Rc<RefCell<AVLTreeNode<T>>>>) ->  usize {
         if node.is_none() { return 0 }
 
         let node_root = node.as_ref().take().unwrap();
 
-        let mut q = VecDeque::<Rc<RefCell<AVLNode<T>>>>::new();
+        let mut q = VecDeque::<Rc<RefCell<AVLTreeNode<T>>>>::new();
 
         q.push_back(node_root.clone());
 
@@ -442,11 +438,12 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
         }
     }
 
+    #[inline]
     fn left_rotate(&mut self) {
         let mut root = self.root.take();
-        let mut node_right: Option<Rc<RefCell<AVLNode<T>>>> = root.as_ref().unwrap().borrow_mut().right.take();
+        let mut node_right: Option<Rc<RefCell<AVLTreeNode<T>>>> = root.as_ref().unwrap().borrow_mut().right.take();
 
-        let node_left: Option<Rc<RefCell<AVLNode<T>>>>;
+        let node_left: Option<Rc<RefCell<AVLTreeNode<T>>>>;
         if node_right.is_some() {
             node_left = node_right.as_ref().unwrap().borrow_mut().left.take();
             root.as_mut().unwrap().borrow_mut().right = node_left;
@@ -455,12 +452,13 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
         self.root = node_right;
     }
 
-    fn left_rotate_node<'a>(node: &'a mut Option<Rc<RefCell<AVLNode<T>>>>) {
+    #[inline]
+    fn left_rotate_node<'a>(node: &'a mut Option<Rc<RefCell<AVLTreeNode<T>>>>) {
         if node.is_some() {
-            let mut node_root: AVLNode<T> = node.as_ref().take().unwrap().borrow().clone();
-            let mut node_right: Option<Rc<RefCell<AVLNode<T>>>> = node_root.right.take();
+            let mut node_root: AVLTreeNode<T> = node.as_ref().take().unwrap().borrow().clone();
+            let mut node_right: Option<Rc<RefCell<AVLTreeNode<T>>>> = node_root.right.take();
 
-            let node_left: Option<Rc<RefCell<AVLNode<T>>>>;
+            let node_left: Option<Rc<RefCell<AVLTreeNode<T>>>>;
             if node_right.is_some() {
                 node_left = node_right.as_ref().unwrap().borrow_mut().left.take();
                 node_root.right = node_left;
@@ -472,11 +470,12 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
         }
     }
 
+    #[inline]
     fn right_rotate(&mut self) {
         let mut root = self.root.take();
-        let mut node_left: Option<Rc<RefCell<AVLNode<T>>>> = root.as_ref().unwrap().borrow_mut().left.take();
+        let mut node_left: Option<Rc<RefCell<AVLTreeNode<T>>>> = root.as_ref().unwrap().borrow_mut().left.take();
 
-        let node_right: Option<Rc<RefCell<AVLNode<T>>>>;
+        let node_right: Option<Rc<RefCell<AVLTreeNode<T>>>>;
         if node_left.is_some() {
             node_right = node_left.as_ref().unwrap().borrow_mut().right.take();
             root.as_mut().unwrap().borrow_mut().left = node_right;
@@ -486,12 +485,13 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
         self.root = node_left;
     }
 
-    fn right_rotate_node<'a>(node: &'a mut Option<Rc<RefCell<AVLNode<T>>>>) {
+    #[inline]
+    fn right_rotate_node<'a>(node: &'a mut Option<Rc<RefCell<AVLTreeNode<T>>>>) {
         if node.is_some() {
-            let mut node_root: AVLNode<T> = node.as_ref().take().unwrap().borrow().clone();
-            let mut node_left: Option<Rc<RefCell<AVLNode<T>>>> = node_root.left.take();
+            let mut node_root: AVLTreeNode<T> = node.as_ref().take().unwrap().borrow().clone();
+            let mut node_left: Option<Rc<RefCell<AVLTreeNode<T>>>> = node_root.left.take();
 
-            let node_right: Option<Rc<RefCell<AVLNode<T>>>>;
+            let node_right: Option<Rc<RefCell<AVLTreeNode<T>>>>;
             if node_left.is_some() {
                 node_right = node_left.as_ref().unwrap().borrow_mut().right.take();
                 node_root.left = node_right;
@@ -511,10 +511,10 @@ impl <T> Display for AVLTree<T> where T: Clone + Display{
         writeln!(f, "AVLTree (size = {}): ", self.size);
 
         if self.root.is_some() {
-            let mut node_vec: Vec<(usize, Rc<RefCell<AVLNode<T>>>)> = Vec::new();
-            let mut node_vec_current: Vec<(usize, Rc<RefCell<AVLNode<T>>>)> = vec![(column, Rc::clone(&self.root.as_ref().unwrap()))];
+            let mut node_vec: Vec<(usize, Rc<RefCell<AVLTreeNode<T>>>)> = Vec::new();
+            let mut node_vec_current: Vec<(usize, Rc<RefCell<AVLTreeNode<T>>>)> = vec![(column, Rc::clone(&self.root.as_ref().unwrap()))];
 
-            let mut node_removed: Rc<RefCell<AVLNode<T>>> = Rc::new(RefCell::new(AVLNode { data: None, left: None, right: None }));;
+            let mut node_removed: Rc<RefCell<AVLTreeNode<T>>> = Rc::new(RefCell::new(AVLTreeNode { data: None, left: None, right: None }));;
 
             while !node_vec_current.is_empty() {
                 if node_vec_current[0].1.borrow().data.is_some() {
@@ -542,7 +542,8 @@ impl <T> Display for AVLTree<T> where T: Clone + Display{
 }
 
 #[allow(unused_mut, unused_variables, unused_assignments)]
-impl<T: Clone> Drop for AVLNode<T>{
+impl<T: Clone> Drop for AVLTreeNode<T>{
+    #[inline]
     fn drop(&mut self) {
         // let mut data = mem::replace(&mut self.data, None);
         let mut left = mem::replace(&mut self.left, None);
@@ -592,14 +593,20 @@ mod test {
         // println!("{:?}\n", tree);
         // println!("{}\n", tree);
 
-        let now = Instant::now();
+        // let now = Instant::now();
         let mut r = false;
-        for i in 0..2000 {
-            r = tree.insert(i);
-        }
 
-        let new_now = Instant::now();
-        println!("time = {:?}", new_now.duration_since(now));
+        let repeat = 100;
+        let mut time = 0;
+        for _ in 0..repeat {
+            let now = Instant::now();
+            for i in 0..1_000 {
+                r = tree.insert(i);
+            }
+            let new_now = Instant::now();
+            time = new_now.duration_since(now).as_secs() * 1_000_000_000 + new_now.duration_since(now).subsec_nanos() as u64
+        }
+        println!("time = {:?} ms", time as f64 / 1_000_000.0);
 
         println!("depth = {:?}", tree.depth());
         println!("height = {:?}", tree.height());

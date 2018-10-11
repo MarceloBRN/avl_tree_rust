@@ -3,8 +3,8 @@ name = "avl_tree"
 version = "0.1.0"
 authors = ["MarceloBRN"]
 
-[profile.test]
-opt-level = 3
+# [profile.test]
+# opt-level = 3
 
-[profile.dev]
-opt-level = 3
+# [profile.dev]
+# opt-level = 3

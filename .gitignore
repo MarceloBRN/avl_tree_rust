@@ -2,6 +2,7 @@
 /src/utils
 /src/array.rs
 /src/trew.rs
+/src/tree.rs
 /src/hex
 /src/lib
 /.vscode
