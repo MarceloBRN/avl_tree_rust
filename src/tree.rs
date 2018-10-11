@@ -168,7 +168,9 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
                         root.as_mut().unwrap().borrow_mut().left = node_left;
                         self.root = Option::clone(&root);
 
-                        AVLTree::<T>::right_rotate_node(&mut self.root);
+                        // AVLTree::<T>::right_rotate_node(&mut self.root);
+
+                        self.right_rotate();
 
                         self.depth_right = self.depth_right + 1;
                         self.depth_left = self.height_left();
@@ -193,7 +195,9 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug {
                         root.as_mut().unwrap().borrow_mut().right = node_right;
                         self.root = Option::clone(&root);
 
-                        AVLTree::<T>::left_rotate_node(&mut self.root);
+                        // AVLTree::<T>::left_rotate_node(&mut self.root);
+
+                        self.left_rotate();
 
                         self.depth_right = self.height_right();
                         self.depth_left = self.depth_left + 1;
