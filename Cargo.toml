@@ -1,7 +1,12 @@
 [package]
-name = "avl_tree"
+name = "avl_tree_rs"
 version = "0.1.0"
 authors = ["MarceloBRN"]
+keywords = ["tree", "collection", "avl"]
+categories = ["data-structures"]
+# documentation = "https://docs.rs/avl_tree_rs/"
+repository = "https://github.com/MarceloBRN/AVL_Tree_Rust"
+description = "Full safe avl tree"
 
 # [profile.test]
 # opt-level = 3
