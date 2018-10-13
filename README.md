@@ -1,6 +1,6 @@
 Code in progress ...
 
-<!-- Full safe avl tree written in rust. -->
+<!-- Full safe avl tree written in rust with rebalance under the main root. -->
 
 ## Usage
 

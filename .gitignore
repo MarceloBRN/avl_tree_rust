@@ -1,3 +1,4 @@
+/src/_tree.rs
 /target
 **/*.rs.bk
 Cargo.lock

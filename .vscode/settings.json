@@ -1,5 +1,6 @@
 {
     "code-runner.executorMapByFileExtension": {
-        ".toml": "cd $dir && cargo build --release && cargo doc --release --no-deps && cargo test --release -- --nocapture"
+        // ".toml": "cd $dir && cargo build --release && cargo doc --release --no-deps && cargo test --release -- --nocapture"
+        ".toml": "cd $dir && cargo test --release -- --nocapture"
     },
 }
