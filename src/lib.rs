@@ -56,6 +56,7 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
     pub fn clear(&mut self) {
         if self.size != 0 {
             let root = self.root.take();
+            self.size = 0;
         }
     }
 
@@ -311,11 +312,11 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
         unimplemented!();
     }
 
-    pub fn max_value(&self) -> &T {
+    pub fn max_value(&self) -> T {
         unimplemented!();
     }
 
-    pub fn min_value(&self) -> &T {
+    pub fn min_value(&self) -> T {
         unimplemented!();
     }
 
@@ -331,17 +332,15 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
                 if node_root.right.is_none() && node_root.left.is_none() {
                     let nd = self.root.take().unwrap();
                     node_data = nd.borrow().data.clone();
-                    self.size -= 1;
                 } else if node_root.right.is_none() {
                     self.root = node_root.left.take();
-                    self.size -= 1;
                 } else if node_root.left.is_none() {
                     self.root = node_root.right.take();
-                    self.size -= 1;
                 } else {
                     
                 }
-
+                self.size -= 1;
+                
             } else {
                 let root: Rc<RefCell<AVLNode<T>>> = self.root.take().unwrap();
 
@@ -354,7 +353,7 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
                     if node_current.borrow().data.is_some() {
                         if &data == node_current.borrow().data.as_ref().unwrap() {
                             let node_c = Rc::clone(&node_current);
-                            let node_c = node_c.borrow();
+                            let mut node_c = node_c.borrow_mut();
 
                             if node_c.right.is_none() && node_c.left.is_none() {
                                 match node_direction {
@@ -367,10 +366,29 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
                                     _ => {}
                                 }
 
+                                break;
                             } else if node_c.right.is_none() {
-
+                                match node_direction {
+                                    NodeDirection::NodeLeft => {
+                                        node_parent.borrow_mut().left = node_c.left.take();
+                                    },
+                                    NodeDirection::NodeRight => {
+                                        node_parent.borrow_mut().right = node_c.left.take();
+                                    },
+                                    _ => {}
+                                }
+                                break;
                             } else if node_c.left.is_none() {
-
+                                match node_direction {
+                                    NodeDirection::NodeLeft => {
+                                        node_parent.borrow_mut().left = node_c.right.take();
+                                    },
+                                    NodeDirection::NodeRight => {
+                                        node_parent.borrow_mut().right = node_c.right.take();
+                                    },
+                                    _ => {}
+                                }
+                                break;
                             } else {
 
                             }
@@ -411,20 +429,124 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
                                 }
                             }
                         }
+
+                        self.size -= 1;
                     } else {
                         break;
                     }
                 }
                 self.root = Some(root);
 
-                self.size -= 1;
+                
             }
 
             node_data
         }
     }
 
-    pub fn sub_tree(&self, data: T) -> &AVLTree<T> {
+    pub fn remove_max(&mut self) -> Option<T> {
+        if self.size == 0 {
+            None
+        } else {
+            let node_data: Option<T>;
+            if self.root.as_ref().unwrap().borrow().right.is_none() {
+
+                if self.root.as_ref().unwrap().borrow().left.is_none() {
+                    let nd = self.root.take().unwrap();
+                    node_data = nd.borrow_mut().data.clone();
+                } else {
+                    let nd = self.root.take().unwrap();
+                    node_data = nd.borrow().data.clone();
+                    self.root = nd.borrow_mut().left.take();
+                }
+
+                self.size -= 1;
+                
+            } else {
+                let root: Rc<RefCell<AVLNode<T>>> = self.root.take().unwrap();
+
+                let mut node_current: Rc<RefCell<AVLNode<T>>> = Rc::clone(&root);
+                let mut node_parent: Rc<RefCell<AVLNode<T>>> = Rc::clone(&root);
+
+                loop {
+                    if node_current.borrow().right.is_some() {
+                        node_parent = node_current;
+                        let node = Rc::clone(&node_parent);
+                        node_current = Rc::clone(node.borrow().right.as_ref().unwrap());
+                    } else {
+                        let node_c = Rc::clone(&node_current);
+                        let mut node_c = node_c.borrow_mut();
+
+                        if node_c.left.is_none() {
+                            let value = Rc::into_raw(node_parent.borrow_mut().right.take().unwrap());
+                            node_data = node_c.data.take();
+                        } else {
+                            node_parent.borrow_mut().right = node_c.left.take();
+                            node_data = node_c.data.take();
+                        }
+                        break;
+                    }
+                }
+                self.size -= 1;
+
+                self.root = Some(root);
+            }
+            node_data
+        }
+    }
+
+    pub fn remove_min(&mut self) -> Option<T> {
+        if self.size == 0 {
+            None
+        } else {
+            let node_data: Option<T>;
+            if self.root.as_ref().unwrap().borrow().left.is_none() {
+
+                if self.root.as_ref().unwrap().borrow().right.is_none() {
+                    let nd = self.root.take().unwrap();
+                    node_data = nd.borrow_mut().data.clone();
+                } else {
+                    let nd = self.root.take().unwrap();
+                    node_data = nd.borrow().data.clone();
+                    self.root = nd.borrow_mut().right.take();
+                }
+
+                self.size -= 1;
+                
+            } else {
+                let root: Rc<RefCell<AVLNode<T>>> = self.root.take().unwrap();
+
+                let mut node_current: Rc<RefCell<AVLNode<T>>> = Rc::clone(&root);
+                let mut node_parent: Rc<RefCell<AVLNode<T>>> = Rc::clone(&root);
+
+                loop {
+                    if node_current.borrow().left.is_some() {
+                        node_parent = node_current;
+                        let node = Rc::clone(&node_parent);
+                        node_current = Rc::clone(node.borrow().left.as_ref().unwrap());
+                    } else {
+                        let node_c = Rc::clone(&node_current);
+                        let mut node_c = node_c.borrow_mut();
+
+                        if node_c.right.is_none() {
+                            let value = Rc::into_raw(node_parent.borrow_mut().left.take().unwrap());
+                            node_data = node_c.data.take();
+                        } else {
+                            node_parent.borrow_mut().left = node_c.right.take();
+                            node_data = node_c.data.take();
+                        }
+                        break;
+                    }
+                }
+                self.size -= 1;
+
+                self.root = Some(root);
+            }
+            node_data
+        }
+    }
+
+    pub fn sub_tree(&self, data: T) -> AVLTree<T> {
         unimplemented!();
     }
 
@@ -757,6 +879,57 @@ mod test {
         // ¦	R: 100
         // ¦	¦	L: 32
         // ¦	¦	¦	R: 56
+
+    }
+
+    #[test]
+    fn remove() {
+        let vec = vec![20, 10, 1, -1, 100, 32, 56];
+        let mut tree = AVLTree::from(vec);
+        tree.remove(10);
+        tree.remove(100);
+
+        // println!("{}", tree);
+        // T: 20
+        // ¦	L: 1
+        // ¦	¦	L: -1
+        // ¦	R: 32
+        // ¦	¦	R: 56
+
+    }
+
+    #[test]
+    fn remove_max_and_min() {
+        let vec = vec![20, 10, 1, -1, 100, 32, 56];
+        let mut tree = AVLTree::from(vec);
+        let max = tree.remove_max();
+        assert_eq!(max, Some(100));
+        let max = tree.remove_max();
+        assert_eq!(max, Some(56));
+
+        let min = tree.remove_min();
+        assert_eq!(min, Some(-1));
+        let min = tree.remove_min();
+        assert_eq!(min, Some(1));
+
+        // println!("{}", tree);
+        // T: 20
+        // ¦	L: 10
+        // ¦	R: 32
+
+        let vec = vec![100];
+        let mut tree = AVLTree::from(vec);
+        let max = tree.remove_max();
+        assert_eq!(max, Some(100));
+        let max = tree.remove_max();
+        assert_eq!(max, None);
+
+        let vec = vec![100];
+        let mut tree = AVLTree::from(vec);
+        let min = tree.remove_min();
+        assert_eq!(min, Some(100));
+        let min = tree.remove_min();
+        assert_eq!(min, None);
 
     }
 }
