@@ -5,7 +5,7 @@ authors = ["MarceloBRN"]
 keywords = ["tree", "collection", "avl"]
 categories = ["data-structures"]
 # documentation = "https://docs.rs/avl_tree_rs/"
-repository = "https://github.com/MarceloBRN/AVL_Tree_Rust"
+repository = "https://github.com/MarceloBRN/avl_tree_rust"
 description = "Full safe avl tree"
 
 # [profile.test]
