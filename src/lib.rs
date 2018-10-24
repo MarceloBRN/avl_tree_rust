@@ -23,12 +23,11 @@ struct AVLNode<T: Clone>{
     right: Option<Rc<RefCell<AVLNode<T>>>>,
 }
 
-#[allow(dead_code)]
+#[allow(dead_code, non_snake_case)]
 pub enum BTreeOrder {
     PreOrder,
     InOrder,
     PostOrder,
-    LevelOrder,
 }
 
 #[derive(Debug)]
@@ -38,7 +37,7 @@ enum NodeDirection {
     NodeRight,
 }
 
-#[allow(dead_code, unused_variables)]
+#[allow(dead_code, unused_variables, non_snake_case, unreachable_patterns)]
 impl <T> AVLTree<T> where T: Clone + Ord + Debug{
     pub fn new() -> Self {
         AVLTree {
@@ -50,7 +49,74 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
     }
 
     pub fn as_vec(&self, arg: BTreeOrder) -> Vec<T> {
-        unimplemented!();
+        let mut v = vec![];
+        if self.size == 0 {
+            return v
+        }
+
+
+        match arg {
+            BTreeOrder::PreOrder => {
+                let node_root = self.root.clone();
+                let mut stack = VecDeque::<Option<Rc<RefCell<AVLNode<T>>>>>::new();
+                stack.push_back(node_root.clone());
+
+                loop {
+                    let mut node_count: usize = stack.len();
+                    if node_count == 0 {
+                        return v
+                    }
+
+                    while node_count > 0 {
+
+                        let node = stack.pop_back().unwrap().unwrap();
+                        v.push(node.borrow_mut().data.as_ref().unwrap().clone());
+                        if node.borrow().right.is_some() {
+                            stack.push_back(node.borrow().right.clone());
+                        }
+                        if node.borrow().left.is_some() {
+                            stack.push_back(node.borrow().left.clone());
+                        }
+                        node_count = node_count - 1;
+                    }
+                }
+            },
+            BTreeOrder::InOrder => {
+                let node_root = self.root.as_ref().unwrap();
+                let mut node_current: Rc<RefCell<AVLNode<T>>> = node_root.clone();
+
+                let mut stack = VecDeque::<Option<Rc<RefCell<AVLNode<T>>>>>::new();
+
+                while stack.len() != 0 || node_current.borrow().data.is_some() {
+
+                    while node_current.borrow().data.is_some() {
+
+                        stack.push_back(Some(node_current.clone()));
+                        let node_next = Rc::clone(&node_current);
+                        if node_current.borrow().left.is_some() {
+                            node_current = Rc::clone(node_next.borrow().left.as_ref().unwrap());
+                        } else {
+                            break;
+                        }
+                    }
+
+                    node_current = stack.pop_back().unwrap().unwrap();
+                    v.push(node_current.borrow_mut().data.as_ref().unwrap().clone());
+
+                    let node_next = Rc::clone(&node_current);
+                    if node_current.borrow().right.is_some() {
+                        node_current = Rc::clone(node_next.borrow().right.as_ref().unwrap());
+                    } else {
+                        node_current = Rc::new(RefCell::new(AVLNode{data: None, left: None, right: None}));
+                    }
+
+                }
+                return v
+            },
+            BTreeOrder::PostOrder => {
+                return vec![]
+            }
+        }
     }
 
     pub fn clear(&mut self) {
@@ -60,11 +126,52 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
         }
     }
 
-    pub fn contains(&self, data: T) ->  bool {
-        unimplemented!();
+    pub fn contains(&self, data: T) ->  bool where T: Clone{
+        if self.size == 0 {
+            false
+        } else {
+            let root = self.root.as_ref().unwrap();
+            let mut node_current: Rc<RefCell<AVLNode<T>>> = root.clone();
+
+            loop {
+
+                let nc = node_current.borrow().data.clone();
+                
+                if nc.is_some() {
+
+                    if &data == nc.as_ref().unwrap() {
+
+                        return true
+
+                    } else if &data < nc.as_ref().unwrap() {
+
+                        let node_next = Rc::clone(&node_current);
+                        if node_current.borrow().left.is_some() {
+                            node_current = Rc::clone(node_next.borrow().left.as_ref().unwrap());
+                        } else {
+                            break;
+                        }
+
+                    } else {
+
+                        let node_next = Rc::clone(&node_current);
+                        if node_current.borrow().right.is_some() {
+                            node_current = Rc::clone(node_next.borrow().right.as_ref().unwrap());
+                        } else {
+                            break;
+                        }
+                        
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            false
+        }
     }
 
-    pub fn children(&self, data: T) ->  (Option<T>, Option<T>) {
+    pub fn children(&self, data: T) ->  (Option<T>, Option<T>) where T: Clone {
         unimplemented!();
     }
 
@@ -120,7 +227,7 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
         height_left
     }
 
-    pub fn height_left_from_data(&self, data: T) ->  isize {
+    pub fn height_left_from_data(&self, data: T) ->  isize where T: Clone {
         unimplemented!();
     }
 
@@ -137,14 +244,14 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
         height_right
     }
 
-    pub fn height_right_from_data(&self, data: T) ->  isize {
+    pub fn height_right_from_data(&self, data: T) ->  isize where T: Clone {
         unimplemented!();
     }
 
-    pub fn insert(&mut self, key: T) -> bool{
+    pub fn insert(&mut self, data: T) -> bool where T: Clone{
         if self.size == 0 {
             let new_node = Rc::new(RefCell::new(AVLNode {
-                data: Some(T::clone(&key)),
+                data: Some(T::clone(&data)),
                 left: None,
                 right: None,
             }));
@@ -163,12 +270,12 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
                 
                 if nc.is_some() {
 
-                    if &key == nc.as_ref().unwrap() {
+                    if &data == nc.as_ref().unwrap() {
 
                         self.root = Some(root);
                         return false
 
-                    } else if &key < nc.as_ref().unwrap() {
+                    } else if &data < nc.as_ref().unwrap() {
 
                         node_parent = node_current;
 
@@ -194,7 +301,7 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
                 }
             }
 
-            let new_node = Rc::new(RefCell::new(AVLNode {   data: Some(T::clone(&key)), 
+            let new_node = Rc::new(RefCell::new(AVLNode {   data: Some(T::clone(&data)), 
                                                                 left: None, 
                                                                 right: None, }));
 
@@ -204,7 +311,7 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
 
                 let n = Rc::make_mut(self.root.as_mut().unwrap());
 
-                if Some(&key) < n.get_mut().data.as_ref(){
+                if Some(&data) < n.get_mut().data.as_ref(){
                     n.borrow_mut().left = Some(new_node);
                     self.height_left += 1;
                 } else {
@@ -216,10 +323,10 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
 
                 self.root = Some(root);
 
-                if Some(&key) < node_parent.borrow().data.as_ref(){
+                if Some(&data) < node_parent.borrow().data.as_ref(){
                     node_parent.borrow_mut().left = Some(new_node);
                     if node_parent.borrow().right.is_none(){
-                        if Some(&key) < self.root.as_ref().unwrap().borrow().data.as_ref(){
+                        if Some(&data) < self.root.as_ref().unwrap().borrow().data.as_ref(){
                             self.height_left += 1;
                         } else {
                             self.height_right += 1;
@@ -228,7 +335,7 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
                 } else {
                     node_parent.borrow_mut().right = Some(new_node);
                     if node_parent.borrow().left.is_none(){
-                        if Some(&key) < self.root.as_ref().unwrap().borrow().data.as_ref(){
+                        if Some(&data) < self.root.as_ref().unwrap().borrow().data.as_ref(){
                             self.height_left += 1;
                         } else {
                             self.height_right += 1;
@@ -314,7 +421,7 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
         }
     }
 
-    pub fn remove(&mut self, data: T) -> Option<T> {
+    pub fn remove(&mut self, data: T) -> Option<T> where T: Clone{
         if self.size == 0 {
             None
         } else {
@@ -547,7 +654,7 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
         }
     }
 
-    pub fn sub_tree(&self, data: T) -> AVLTree<T> {
+    pub fn sub_tree(&self, data: T) -> AVLTree<T> where T: Clone{
         unimplemented!();
     }
 
@@ -786,6 +893,7 @@ impl<T> From<Vec<T>> for AVLTree<T> where T: Clone + Ord + Debug{
 mod test {
 
     use super::AVLTree;
+    use super::BTreeOrder;
     use std::time::Instant;
 
     // use std::process::Command;
@@ -1016,5 +1124,26 @@ mod test {
         tree.remove_min();
         assert_eq!(tree.min_value(), None);
 
+    }
+
+    #[test]
+    fn tree_contains() {
+        let vec = vec![20, 10, 1, -1, 100, 32, 56];
+        let tree = AVLTree::from(vec);
+        assert_eq!(tree.contains(100), true);
+        assert_eq!(tree.contains(1000), false);
+        assert_eq!(tree.contains(1), true);
+        let a = 32;
+        assert_eq!(tree.contains(a), true);
+        assert_eq!(a, 32);
+    }
+
+    #[test]
+    fn tree_as_vec() {
+        let vec = vec![23, 18, 44, 12, 20, 35, 52];
+        let tree = AVLTree::from(vec);
+        assert_eq!(tree.as_vec(BTreeOrder::PreOrder), vec![23, 18, 12, 20, 44, 35, 52]);
+        assert_eq!(tree.as_vec(BTreeOrder::InOrder), vec![12, 18, 20, 23, 35, 44, 52]);
+        // assert_eq!(tree.as_vec(BTreeOrder::PreOrder), vec![23, 18, 12, 20, 44, 35, 52]);
     }
 }
