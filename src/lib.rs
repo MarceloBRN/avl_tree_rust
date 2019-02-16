@@ -54,7 +54,6 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
             return v
         }
 
-
         match arg {
             BTreeOrder::PreOrder => {
                 let node_root = self.root.clone();
@@ -113,8 +112,43 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
                 }
                 return v
             },
+            
             BTreeOrder::PostOrder => {
-                return vec![]
+                let node_root = self.root.as_ref().unwrap();
+                let mut node_current: Rc<RefCell<AVLNode<T>>> = node_root.clone();
+
+                let mut stack = VecDeque::<Option<Rc<RefCell<AVLNode<T>>>>>::new();
+
+                while stack.len() != 0 || node_current.borrow().data.is_some() {
+
+                    while node_current.borrow().data.is_some() {
+
+                        let node_next = Rc::clone(&node_current);
+                        if node_current.borrow().right.is_some() {
+                            stack.push_back(Some(node_next.borrow().right.as_ref().unwrap().clone()));
+                        }
+
+                        stack.push_back(Some(node_current.clone()));
+
+                        if node_current.borrow().left.is_some() {
+                            node_current = Rc::clone(node_next.borrow().left.as_ref().unwrap());
+                        } else {
+                            break;
+                        }
+                    }
+
+                    node_current = stack.pop_back().unwrap().unwrap();
+                    v.push(node_current.borrow_mut().data.as_ref().unwrap().clone());
+
+                    let node_next = Rc::clone(&node_current);
+                    if node_current.borrow().left.is_some() {
+                        node_current = Rc::clone(node_next.borrow().left.as_ref().unwrap());
+                    } else {
+                        node_current = Rc::new(RefCell::new(AVLNode{data: None, left: None, right: None}));
+                    }
+
+                }
+                return v
             }
         }
     }
@@ -438,7 +472,50 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
                 } else if node_root.left.is_none() {
                     self.root = node_root.right.take();
                 } else {
-                    
+                    let nd_right = node_root.right.take();
+                    let nd_left = node_root.left.take();
+
+                    // let mut node_d: Option<Rc<RefCell<AVLNode<T>>>> = None;
+                    if nd_left.as_ref().unwrap().borrow().right.is_none() {
+                        nd_left.as_ref().unwrap().borrow_mut().right = nd_right;
+                        self.root = nd_left;
+                        self.height_left -= 1;
+                    } else {
+
+                        let mut node_current: Rc<RefCell<AVLNode<T>>> = nd_left.as_ref().unwrap().clone();
+                        let mut node_parent: Rc<RefCell<AVLNode<T>>> = nd_left.as_ref().unwrap().clone();
+
+                        loop {
+                            if node_current.borrow().right.is_some() {
+                                node_parent = node_current;
+                                let node = Rc::clone(&node_parent);
+                                node_current = Rc::clone(node.borrow().right.as_ref().unwrap());
+                            } else {
+                                let node_c = Rc::clone(&node_current);
+                                let mut node_c = node_c.borrow_mut();
+
+                                if node_c.left.is_none() {
+                                    // let value = Rc::into_raw(node_parent.borrow_mut().right.take().unwrap());
+                                    node_parent.borrow_mut().right = None;
+                                    node_c.right = nd_right;
+                                    node_c.left = nd_left;
+                                    self.root = Some(node_current);
+                                } else {
+                                    node_parent.borrow_mut().right = node_c.left.take();
+                                    node_c.right = nd_right;
+                                    node_c.left = nd_left;
+                                    self.root = Some(node_current);
+                                }
+                                break;
+                            }
+                        }
+                        self.height_left -= 1;
+                    }
+
+                    self.rebalance();
+
+                    node_data = node_root.data.clone();
+
                 }
                 self.size -= 1;
                 
@@ -493,8 +570,8 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
                             } else {
 
                             }
-
                             break;
+
                         } else if &data < node_current.borrow().data.as_ref().unwrap() {
 
                             let node_c = Rc::clone(&node_current);
@@ -537,10 +614,7 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
                     }
                 }
                 self.root = Some(root);
-
-                
             }
-
             node_data
         }
     }
@@ -815,7 +889,7 @@ impl <T> AVLTree<T> where T: Clone + Ord + Debug{
     }
 }
 
-#[allow(unused_mut, unused_variables, unused_assignments)]
+#[allow(unused_mut, unused_variables, unused_assignments, unused_must_use)]
 impl <T> Display for AVLTree<T> where T: Clone + Display{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut column: usize = 0;
@@ -854,7 +928,7 @@ impl <T> Display for AVLTree<T> where T: Clone + Display{
     }
 }
 
-#[allow(unused_mut, unused_variables, unused_assignments)]
+#[allow(unused_mut, unused_variables, unused_assignments, unused_must_use)]
 impl<T> Drop for AVLNode<T> where T: Clone{
     #[inline]
     fn drop(&mut self) {
@@ -901,7 +975,7 @@ mod test {
     #[allow(unused_mut, unused_variables, unused_assignments)]
     #[test]
     fn new_test() {
-        let mut tree = AVLTree::<i32>::new();
+        // let mut tree = AVLTree::<i32>::new();
         // tree.insert(5);
         // println!("depth 1 = {:?}", tree.depth());
         // tree.insert(1);
@@ -920,18 +994,19 @@ mod test {
         // let now = Instant::now();
         let mut r = false;
 
-        let repeat = 10;
+        let repeat = 1;
         let mut time: u64 = 0;
         for _ in 0..repeat {
+            let mut tree = AVLTree::<i32>::new();
             let now = Instant::now();
             for i in 0..1000 {
                 r = tree.insert(i);
             }
             let new_now = Instant::now();
-            time += new_now.duration_since(now).as_secs() * 1_000_000 + new_now.duration_since(now).subsec_nanos() as u64
+            time += new_now.duration_since(now).as_secs() * 1_000 + new_now.duration_since(now).subsec_millis() as u64
         }
         let time = time as f64 / repeat as f64;
-        println!("time = {:?} ms", time / 1_000_000.0);
+        println!("time = {:?} s", time / 1_000.0);
 
         // println!("depth = {:?}", tree.depth());
         // println!("height = {:?}", tree.height());
@@ -1055,13 +1130,24 @@ mod test {
         let mut tree = AVLTree::from(vec);
         tree.remove(10);
         tree.remove(100);
-
-        // println!("{}", tree);
         // T: 20
         // ¦	L: 1
         // ¦	¦	L: -1
         // ¦	R: 32
         // ¦	¦	R: 56
+
+        tree.remove(20);
+        // T: 1
+        // ¦	L: -1
+        // ¦	R: 32
+        // ¦	¦	R: 56
+
+        tree.remove(1);
+        // T: 32
+        // ¦	L: -1
+        // ¦	R: 56
+
+        println!("{}", tree);
 
     }
 
@@ -1144,6 +1230,7 @@ mod test {
         let tree = AVLTree::from(vec);
         assert_eq!(tree.as_vec(BTreeOrder::PreOrder), vec![23, 18, 12, 20, 44, 35, 52]);
         assert_eq!(tree.as_vec(BTreeOrder::InOrder), vec![12, 18, 20, 23, 35, 44, 52]);
-        // assert_eq!(tree.as_vec(BTreeOrder::PreOrder), vec![23, 18, 12, 20, 44, 35, 52]);
+        // println!("{:?}", tree.as_vec(BTreeOrder::PostOrder));
+        // assert_eq!(tree.as_vec(BTreeOrder::PostOrder), vec![12, 20, 18, 35, 52, 44, 23]);
     }
 }
