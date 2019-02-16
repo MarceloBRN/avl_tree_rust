@@ -1,5 +1,3 @@
-Code in progress ...
-
 Safe AVL Tree written in rust with rebalance under the main root.
 
 ## Usage
